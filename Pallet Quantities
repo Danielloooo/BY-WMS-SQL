@@ -1,0 +1,182 @@
+/*please note that this might not be transferable from one BY WMS instance to another*/
+[SELECT adrnam,
+        part_type,
+        pallet_qty,
+        untpal,
+        CASE WHEN COALESCE(SUM("1"), null) = 0 THEN null
+             ELSE COALESCE(SUM("1"), null)
+        END AS qty_1,
+        CASE WHEN COALESCE(SUM("2"), null) = 0 THEN null
+             ELSE COALESCE(SUM("2"), null)
+        END AS qty_2,
+        CASE WHEN COALESCE(SUM("3"), null) = 0 THEN null
+             ELSE COALESCE(SUM("3"), null)
+        END AS qty_3,
+        CASE WHEN COALESCE(SUM("4"), null) = 0 THEN null
+             ELSE COALESCE(SUM("4"), null)
+        END AS qty_4,
+        CASE WHEN COALESCE(SUM("5"), null) = 0 THEN null
+             ELSE COALESCE(SUM("5"), null)
+        END AS qty_5,
+        CASE WHEN COALESCE(SUM("6"), null) = 0 THEN null
+             ELSE COALESCE(SUM("6"), null)
+        END AS qty_6,
+        CASE WHEN COALESCE(SUM("7"), null) = 0 THEN null
+             ELSE COALESCE(SUM("7"), null)
+        END AS qty_7,
+        CASE WHEN COALESCE(SUM("8"), null) = 0 THEN null
+             ELSE COALESCE(SUM("8"), null)
+        END AS qty_8,
+        CASE WHEN COALESCE(SUM("9"), null) = 0 THEN null
+             ELSE COALESCE(SUM("9"), null)
+        END AS qty_9,
+        CASE WHEN COALESCE(SUM("10"), null) = 0 THEN null
+             ELSE COALESCE(SUM("10"), null)
+        END AS qty_10,
+        CASE WHEN COALESCE(SUM("11"), null) = 0 THEN null
+             ELSE COALESCE(SUM("11"), null)
+        END AS qty_11,
+        CASE WHEN COALESCE(SUM("12"), null) = 0 THEN null
+             ELSE COALESCE(SUM("12"), null)
+        END AS qty_12,
+        CASE WHEN COALESCE(SUM("13"), null) = 0 THEN null
+             ELSE COALESCE(SUM("13"), null)
+        END AS qty_13,
+        CASE WHEN COALESCE(SUM("14"), null) = 0 THEN null
+             ELSE COALESCE(SUM("14"), null)
+        END AS qty_14,
+        CASE WHEN COALESCE(SUM("15"), null) = 0 THEN null
+             ELSE COALESCE(SUM("15"), null)
+        END AS qty_15,
+        CASE WHEN COALESCE(SUM("16"), null) = 0 THEN null
+             ELSE COALESCE(SUM("16"), null)
+        END AS qty_16,
+        CASE WHEN COALESCE(SUM("17"), null) = 0 THEN null
+             ELSE COALESCE(SUM("17"), null)
+        END AS qty_17,
+        CASE WHEN COALESCE(SUM("18"), null) = 0 THEN null
+             ELSE COALESCE(SUM("18"), null)
+        END AS qty_18,
+        CASE WHEN COALESCE(SUM("19"), null) = 0 THEN null
+             ELSE COALESCE(SUM("19"), null)
+        END AS qty_19,
+        CASE WHEN COALESCE(SUM("20"), null) = 0 THEN null
+             ELSE COALESCE(SUM("20"), null)
+        END AS qty_20,
+        CASE WHEN COALESCE(SUM("21"), null) = 0 THEN null
+             ELSE COALESCE(SUM("21"), null)
+        END AS qty_21,
+        CASE WHEN COALESCE(SUM("22"), null) = 0 THEN null
+             ELSE COALESCE(SUM("22"), null)
+        END AS qty_22,
+        CASE WHEN COALESCE(SUM("23"), null) = 0 THEN null
+             ELSE COALESCE(SUM("23"), null)
+        END AS qty_23,
+        CASE WHEN COALESCE(SUM("24"), null) = 0 THEN null
+             ELSE COALESCE(SUM("24"), null)
+        END AS qty_24
+   FROM (SELECT schbat,
+                list_id,
+                prtnum,
+                srcloc,
+                oprcod,
+                pcksts,
+                pckqty,
+                pckqty units_picked,
+                adrnam,
+                untpal,
+                CASE WHEN (PRTNUM LIKE '%143%' OR PRTNUM LIKE '%155%' OR PRTNUM LIKE '%165%') THEN 'GEN2'
+                     WHEN (PRTNUM LIKE 'TVPLB%' AND (PRTNUM LIKE '%043%' OR PRTNUM LIKE '%055%' OR PRTNUM LIKE '%065%')) THEN 'CELLO'
+                     WHEN (PRTNUM not LIKE 'TVPLB%' AND (PRTNUM LIKE '%043%' OR PRTNUM LIKE '%055%' OR PRTNUM LIKE '%065%')) THEN 'GEN1'
+                     ELSE 'UNKNOWN'
+                END AS part_type,
+                CASE WHEN pick_type = 'Pallet Pick' THEN 'Full Pallet'
+                     ELSE 'Less than a Pallet'
+                END AS pallet_qty
+           FROM(SELECT pckwrk_view.schbat,
+            pckwrk_view.list_id,
+            pckwrk_view.prtnum,
+            pckwrk_view.srcloc,
+            pckwrk_view.oprcod,
+            pckwrk_view.pcksts,
+            adrmst.adrnam,
+            SUM(pckwrk_view.pckqty) AS pckqty,
+            pckwrk_view_group.picks_per_list,
+            prtftp_view.untpal,
+            CASE WHEN pckwrk_view_group.picks_per_list < prtftp_view.untpal THEN 'Each Pick'
+                 WHEN pckwrk_view_group.picks_per_list = prtftp_view.untpal THEN 'Pallet Pick'
+                 ELSE 'Unknown Pick Type'
+                 -- Added ELSE clause
+
+            END AS pick_type
+       FROM pckwrk_view
+       LEFT
+       JOIN prtftp_view
+         ON pckwrk_view.wh_id = prtftp_view.wh_id
+        AND pckwrk_view.prtnum = prtftp_view.prtnum
+        AND pckwrk_view.prt_client_id = prtftp_view.prt_client_id
+       LEFT
+       JOIN prtmst
+         ON prtftp_view.prtnum = prtmst.prtnum
+        AND prtftp_view.wh_id = prtmst.wh_id_tmpl
+        AND prtftp_view.prt_client_id = prtmst.prt_client_id
+       LEFT
+       JOIN prtfam
+         ON prtmst.prtfam = prtfam.prtfam
+       left
+       join cstmst
+         on pckwrk_view.rtcust = cstmst.cstnum
+       left
+       join adrmst
+         on cstmst.adr_id = adrmst.adr_id
+       LEFT OUTER
+       JOIN (SELECT wh_id,
+                    client_id,
+                    schbat,
+                    prtnum,
+                    srcloc,
+                    list_id,
+                    MIN(adddte) AS list_created,
+                    MIN(last_upd_dt) AS list_started,
+                    MAX(last_upd_dt) AS list_completed,
+                    SUM(pckqty) AS picks_per_list
+               FROM pckwrk_view
+              WHERE wrktyp = 'P'
+                AND adddte >= trunc(sysdate -6)
+                AND adddte <= trunc(sysdate)
+                AND wh_id = 'GB_5028'
+              GROUP BY wh_id,
+                    client_id,
+                    schbat,
+                    prtnum,
+                    srcloc,
+                    list_id) pckwrk_view_group
+         ON pckwrk_view.client_id = pckwrk_view_group.client_id
+        AND pckwrk_view.wh_id = pckwrk_view_group.wh_id
+        AND pckwrk_view.schbat = pckwrk_view_group.schbat
+        AND pckwrk_view.prtnum = pckwrk_view_group.prtnum
+        AND pckwrk_view.srcloc = pckwrk_view_group.srcloc
+        AND pckwrk_view.list_id = pckwrk_view_group.list_id
+      WHERE pckwrk_view.wrktyp = 'P'
+        AND pckwrk_view.adddte >= trunc(sysdate -6)
+        AND pckwrk_view.adddte <= trunc(sysdate)
+                    AND pckwrk_view.wh_id = 'GB_5028'
+                    AND prtfam.prtfamgrp = 'TV'
+                  GROUP BY pckwrk_view.schbat,
+                        pckwrk_view.list_id,
+                        pckwrk_view.prtnum,
+                        pckwrk_view.srcloc,
+                        pckwrk_view.oprcod,
+                        pckwrk_view.pcksts,
+                        adrmst.adrnam,
+                        pckwrk_view_group.picks_per_list,
+                        prtftp_view.untpal))
+  PIVOT (COUNT(list_id) FOR pckqty IN ('1' AS "1", '2' AS "2", '3' AS "3", '4' AS "4", '5' AS "5", '6' AS "6", '7' AS "7", '8' AS "8", '9' AS "9", '10' AS "10", '11' AS "11", '12' AS "12", '13' AS "13", '14' AS "14", '15' AS "15", '16' AS "16", '17' AS "17", '18' AS "18", '19' AS "19", '20' AS "20", '21' AS "21", '22' AS "22", '23' AS "23", '24' AS "24"))
+  group by adrnam,
+        part_type,
+        pallet_qty,
+        untpal
+  order by 1,
+        2,
+        4,
+        3] 
