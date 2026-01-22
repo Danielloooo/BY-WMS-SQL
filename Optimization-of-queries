@@ -136,5 +136,54 @@
     AND sp.operation LIKE 'INDEX%'
   ORDER BY s.last_active_time DESC FETCH FIRST 50 ROWS ONLY];
 
-/********************************************************************END*****************************************************************************************/
+/********************************************************************EXAMPLE Of checking the execution path**************************************************************/
 
+
+[select /*+ gather_plan_statistics*/
+        ar_rcvtrk.trlr_id trailer,
+        ar_rcvtrk.trknum asn,
+        ar_rcvtrk.clsdte trailer_close_date,
+        ar_rcvlin.invnum inbound_ord_number,
+        ar_rcvlin.supnum supplier_number,
+        ar_rcvlin.expqty expected_qty,
+        ar_rcvlin.rcvqty received_qty,
+        ar_rcvlin.prtnum item,
+        ar_rcvinv.po_num po,
+        inventory_view.untqty units_in_stock,
+        inventory_view.lodnum lpn,
+        inventory_view.subnum sub_lpn,
+        inventory_view.dtlnum detail_lpn,
+        ar_dlytrn.trndte transaction_date,
+        ar_dlytrn.frstol from_location,
+        ar_dlytrn.tostol to_location,
+        ar_dlytrn.usr_id user_id,
+        ar_dlytrn.actcod activity_code
+   from ar_rcvlin
+  inner
+   join ar_rcvinv
+     on ar_rcvlin.trknum = ar_rcvinv.trknum
+   left
+   join ar_rcvtrk
+     on ar_rcvinv.trknum = ar_rcvtrk.trknum
+   left
+   join inventory_view
+     on inventory_view.rcvkey = ar_rcvlin.rcvkey
+   left
+   join ar_dlytrn
+     on ar_dlytrn.lodnum = inventory_view.lodnum
+  where inventory_view.lodnum in ('L000000072NH', 'L000000072NF')
+ /*LPNS*/
+    and ar_dlytrn.tostol
+ /*this is the location the stock sits in now*/ = 'MARTA'];
+
+[SELECT *
+   FROM
+  TABLE (DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'ALLSTATS LAST +PEEKED_BINDS +OUTLINE +NOTE'))]
+
+
+
+
+
+
+
+/**************************************************************************END*************************************************************************************/
