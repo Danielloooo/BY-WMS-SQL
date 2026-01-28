@@ -1,15 +1,7 @@
 /************************************************DO NOT USE THIS, EVER, UNLESS YOU WANT TO GET FIRED***************************************************************/
 
-
 expand environment variable
-where variable = '$LESDIR'
-|
-[SELECT 'WMS' || UPPER(REPLACE(REPLACE(@VALUE, '/opt/jda/wm/', ''), '/les', '')) INSTANCE
-   FROM DUAL]
-|
-[SELECT distinct TABLE_NAME
-   FROM ALL_TAB_COLS
-  WHERE OWNER = @INSTANCE]
+ where variable = '$LESDIR'
 /*
 --Remove the comment here if your instance has the SYS_AUDIT table, which captures changes
 |
@@ -17,6 +9,13 @@ where variable = '$LESDIR'
   table sys_audit]
 
 */
+|
+[SELECT 'WMS' || UPPER(REPLACE(REPLACE(@VALUE, '/opt/jda/wm/', ''), '/les', '')) INSTANCE
+   FROM DUAL]
+|
+[SELECT distinct TABLE_NAME
+   FROM ALL_TAB_COLS
+  WHERE OWNER = @INSTANCE]
 |
 [drop
   table @table_name:raw] catch(@?);
