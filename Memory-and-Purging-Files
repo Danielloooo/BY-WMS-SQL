@@ -1,0 +1,24 @@
+/*purge directories command syntax*/
+get purge parameters
+ where polval = 'PURGE-PARAMETERS-DIR'
+|
+publish data
+ where command1 = "perl $SALDIR/scripts/purge.pl -d " || @rtstr1 || " -f " || """" || @rtstr2 || """" || " -p 0"
+|
+expand environment variable
+ where name = @command1
+|
+execute os command
+ where cmd = @value;
+
+/*Commands that can be used from Lext Edit to purge files*/
+execute os command
+ where cmd = 'perl /opt/jda/wm/ukmilp3/sal/scripts/purge.pl -d /opt/jda/wm/INSTANCE/les/labels -f "*.out" -p 0';
+execute os command
+ where cmd = 'perl /opt/jda/wm/ukmilp3/sal/scripts/purge.pl -d /opt/jda/wm/INSTANCE/les/reports -f "*.dat" -p 0';
+execute os command
+ where cmd = 'perl /opt/jda/wm/ukmilp3/sal/scripts/purge.pl -d /opt/jda/wm/INSTANCE/les/temp -f "*Serial_History_Data*" -p 0';
+
+/*check memory*/
+execute os command
+ where cmd = 'free -mh';
