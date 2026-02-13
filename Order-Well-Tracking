@@ -2,12 +2,14 @@
         pckwrk_view.schbat WAVE,
         trlr.trlr_id,
         trlsts_dsc.lngdsc TRAILER_STATUS,
+        batsts_dsc.lngdsc wave_status,
         shpsts_dsc.lngdsc SHIPMENT_STATUS,
         linsts_dsc.lngdsc SHIP_LINE_STATUS,
         trunc(shipment.alcdte) allocated_date,
         count(DISTINCT (ord.ordnum)) order_count,
         sum(ORD_LINE.ordqty) ordered,
-        sum(pckwrk_view.pckqty) in_progress
+        sum(pckwrk_view.pckqty) in_progress,
+        sum(ORD_LINE.ordqty) - sum(pckwrk_view.pckqty) as remaining
    from ord
    left
    join ord_line
@@ -32,6 +34,9 @@
     and pckwrk_view.ordnum = ord_line.ordnum
     and pckwrk_view.ordlin = ord_line.ordlin
     and pckwrk_view.ordsln = ord_line.ordsln
+   left
+   join pckbat
+     on pckwrk_view.schbat = pckbat.schbat
    left
    join shipment
      on shipment.ship_id = shipment_line.ship_id
@@ -58,15 +63,21 @@
    join dscmst trlsts_dsc
      on trlr.trlr_stat = trlsts_dsc.colval
     and trlsts_dsc.colnam = 'trlr_stat'
-  where ord_LINE.late_shpdte >= trunc(sysdate -14)
+   left
+   join dscmst batsts_dsc
+     on batsts_dsc.colval = pckbat.batsts
+    and batsts_dsc.colnam = 'batsts'
+  where ord_LINE.late_shpdte >= trunc(sysdate -365)
     and shipment.shpsts <> 'B'
     AND shipment_line.linsts <> 'B'
     and ord.wh_id = 'GB_5028'
     AND trlsts_dsc.lngdsc NOT IN ('Dispatched')
+    and nvl(ord_line.cancelled_flg, 0) = 0
   group by trlr.trlr_id,
         pckwrk_view.schbat,
         trlsts_dsc.lngdsc,
         linsts_dsc.lngdsc,
+        batsts_dsc.lngdsc,
         shpsts_dsc.lngdsc,
         trunc(ord_line.late_shpdte),
         trunc(shipment.alcdte)
@@ -75,20 +86,23 @@
         NULL WAVE,
         NULL trlr_id,
         NULL TRAILER_STATUS,
+        null wave_status,
         NULL SHIPMENT_STATUS,
         NULL SHIP_LINE_STATUS,
         NULL allocated_date,
         count(DISTINCT (ord.ordnum)) order_count,
         sum(ORD_LINE.ordqty) ordered,
-        NULL in_progress
+        NULL in_progress,
+        sum(ORD_LINE.ordqty) remaining
    from ord
    left
    join ord_line
      on ord_line.client_id = ord.client_id
     and ord_line.ordnum = ord.ordnum
     and ord_line.wh_id = ord.wh_id
-  where ord_LINE.late_shpdte >= trunc(sysdate -14)
+  where ord_LINE.late_shpdte >= trunc(sysdate -365)
     and ord.wh_id = 'GB_5028'
+    and nvl(ord_line.cancelled_flg, 0) = 0
     AND NOT EXISTS(SELECT 1
                      FROM shipment_line
                     WHERE shipment_line.wh_id = ord_line.wh_id
